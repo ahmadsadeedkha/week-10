@@ -19,11 +19,13 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
+    "test:e2e": "dotenv -e .env.test -- vitest run --config ./vitest.config.e2e.ts",
     "typeorm": "node --import tsx ./node_modules/typeorm/cli.js -d src/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:generate:test": "dotenv -e .env.test -- node --import tsx ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate src/migrations/InitialSchema",
     "migration:create": "npm run typeorm -- migration:create",
     "migration:run": "npm run typeorm -- migration:run",
+    "migration:run:test": "dotenv -e .env.test -- npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
@@ -59,6 +61,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",
+    "dotenv-cli": "^11.0.0",
     "oxlint": "^1.58.0",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
