@@ -2,22 +2,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
+import { DataSource } from 'typeorm';
+import { createTestApp } from './utils/setup-e2e-app.js';
+import { resetDatabase } from './utils/db-reset.js';
 
 describe('Throttling (C5)', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
-    );
-    await app.init();
+    ({ app, dataSource } = await createTestApp());
   });
 
+  afterEach(async () => {
+    await resetDatabase(dataSource);
+  });
+  
   afterAll(async () => {
     await app.close();
   });
