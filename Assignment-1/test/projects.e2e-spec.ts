@@ -107,4 +107,23 @@ describe('POST /projects — create then read back (C1)', () => {
     expect(res.status).toBe(403);
     expect(res.body).toHaveProperty('statusCode', 403);
   });
+
+  it('rejects an unknown field in the body and creates no row with that value (X2)', async () => {
+    const token = await registerAndLogin(app);
+
+    const res = await request(app.getHttpServer())
+      .post('/projects')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Sneaky Project', ownerId: 999999 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('statusCode', 400);
+
+    // Confirm nothing was persisted at all — not just that the field was stripped
+    const allProjects = await dataSource.query(
+      'SELECT * FROM projects WHERE name = $1',
+      ['Sneaky Project'],
+    );
+    expect(allProjects).toHaveLength(0);
+  });
 });
