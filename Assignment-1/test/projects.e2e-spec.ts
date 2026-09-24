@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { createTestApp } from './utils/setup-e2e-app.js';
 import { resetDatabase } from './utils/db-reset.js';
+import { registerAndLogin } from './utils/authHelpers.js';
 
 describe('POST /projects — create then read back (C1)', () => {
   let app: INestApplication;
@@ -21,24 +22,8 @@ describe('POST /projects — create then read back (C1)', () => {
     await app.close();
   });
 
-  async function registerAndLogin() {
-    const user = {
-      name: 'Ahmad Test',
-      email: `project-owner-${Date.now()}@example.com`,
-      password: 'SecurePass123!',
-    };
-
-    await request(app.getHttpServer()).post('/auth/register').send(user);
-
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ email: user.email, password: user.password });
-
-    return loginRes.body.access_token as string;
-  }
-
   it('creates a project via POST and reads it back via GET', async () => {
-    const token = await registerAndLogin();
+    const token = await registerAndLogin(app);
 
     const createRes = await request(app.getHttpServer())
       .post('/projects')
@@ -74,7 +59,7 @@ describe('POST /projects — create then read back (C1)', () => {
   });
 
   it('returns 400 when creating a project with an invalid body', async () => {
-    const token = await registerAndLogin();
+    const token = await registerAndLogin(app);
 
     const res = await request(app.getHttpServer())
       .post('/projects')
@@ -98,7 +83,7 @@ describe('POST /projects — create then read back (C1)', () => {
   });
 
   it('returns 403 (not 404) when updating a project that does not exist', async () => {
-    const token = await registerAndLogin();
+    const token = await registerAndLogin(app);
 
     const res = await request(app.getHttpServer())
       .patch('/projects/999999')
@@ -113,7 +98,7 @@ describe('POST /projects — create then read back (C1)', () => {
   });
 
   it('returns 403 (not 404) when deleting a project that does not exist', async () => {
-    const token = await registerAndLogin();
+    const token = await registerAndLogin(app);
 
     const res = await request(app.getHttpServer())
       .delete('/projects/999999')

@@ -8,6 +8,12 @@ import { CommentsService } from '../comments/comments.service.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { Project } from '../entities/Project.js';
 
+interface TaskFilters {
+  status?: string;
+  projectId?: number;
+  assigneeId?: number;
+}
+
 @Injectable()
 export class TasksService {
   constructor(
@@ -24,10 +30,37 @@ export class TasksService {
     }
     const task = this.taskRepo.create({
       title: dto.title,
+      description: dto.description,
       priority: dto.priority,
       project,
+      status: dto.status,
     });
     return this.taskRepo.save(task);
+  }
+
+  async findAll(filters: TaskFilters, page = 1, pageSize = 10) {
+    const qb = this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.project', 'project')
+      .leftJoinAndSelect('task.assignee', 'assignee');
+
+    if (filters.status) {
+      qb.andWhere('task.status = :status', { status: filters.status });
+    }
+    if (filters.projectId !== undefined) {
+      qb.andWhere('project.id = :projectId', { projectId: filters.projectId });
+    }
+    if (filters.assigneeId !== undefined) {
+      qb.andWhere('assignee.id = :assigneeId', {
+        assigneeId: filters.assigneeId,
+      });
+    }
+    const take = Math.min(pageSize, 50);
+    const skip = (Math.max(page, 1) - 1) * take;
+
+    const [items, total] = await qb.skip(skip).take(take).getManyAndCount();
+
+    return { items, total, page: Math.max(page, 1), pageSize: take };
   }
 
   async findOne(id: number): Promise<Task & { commentCount: number }> {
