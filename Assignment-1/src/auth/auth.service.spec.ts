@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UnauthorizedException, ConflictException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service.js';
-import { User } from '../entities/User.js';
 import { RefreshToken } from '../entities/RefreshToken.js';
 
 describe('AuthService', () => {
@@ -135,7 +134,7 @@ describe('AuthService', () => {
 
       // The critical assertion: this is what makes the test fail
       // if you delete/comment out the revoked_at update in refresh().
-      const txManager = await dataSource.transaction.mock.results[0].value;
+      await dataSource.transaction.mock.results[0].value;
       expect(dataSource.transaction).toHaveBeenCalled();
 
       // Inspect what the callback passed to manager.update

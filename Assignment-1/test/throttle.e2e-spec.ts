@@ -1,7 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
 import { createTestApp } from './utils/setup-e2e-app.js';
 import { resetDatabase } from './utils/db-reset.js';

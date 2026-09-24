@@ -1,6 +1,4 @@
-// test/error-shape.e2e-spec.ts
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { createTestApp } from './utils/setup-e2e-app.js';

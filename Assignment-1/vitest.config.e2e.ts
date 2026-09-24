@@ -9,5 +9,6 @@ export default defineConfig({
     include: ['**/*.e2e-spec.ts'],
     globalSetup: ['./test/global-setup.ts'],
     hookTimeout: 30000, // DB connection + migrations can outrun the 10s default
+    fileParallelism: false,
   },
 });
