@@ -61,4 +61,31 @@ describe('POST /projects — create then read back (C1)', () => {
       name: 'Test Project',
     });
   });
+
+  it('returns 401 when creating a project with no token', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/projects')
+      .send({ name: 'No Auth Project' });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty('statusCode', 401);
+    expect(res.body).toHaveProperty('message', 'Unauthorized');
+    expect(res.body).toHaveProperty('path', '/projects');
+  });
+
+  it('returns 400 when creating a project with an invalid body', async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app.getHttpServer())
+      .post('/projects')
+      .set('Authorization', `Bearer ${token}`)
+      .send({}); // missing required `name`
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('statusCode', 400);
+    expect(res.body).toHaveProperty('message');
+    expect(
+      Array.isArray(res.body.message) || typeof res.body.message === 'string',
+    ).toBe(true);
+  });
 });
