@@ -10,5 +10,8 @@ export default defineConfig({
     globalSetup: ['./test/global-setup.ts'],
     hookTimeout: 30000, // DB connection + migrations can outrun the 10s default
     fileParallelism: false,
+    sequence: {
+      shuffle: true, // C4: prove order-independence
+    },
   },
 });

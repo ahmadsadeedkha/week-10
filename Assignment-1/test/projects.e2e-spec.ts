@@ -88,4 +88,38 @@ describe('POST /projects — create then read back (C1)', () => {
       Array.isArray(res.body.message) || typeof res.body.message === 'string',
     ).toBe(true);
   });
+
+  it('returns 404 when reading a project that does not exist', async () => {
+    const res = await request(app.getHttpServer()).get('/projects/999999');
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('statusCode', 404);
+    expect(res.body).toHaveProperty('message');
+  });
+
+  it('returns 403 (not 404) when updating a project that does not exist', async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app.getHttpServer())
+      .patch('/projects/999999')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Updated Name' });
+
+    // RolesGuard checks project_members before the service checks existence,
+    // so a nonexistent project has no membership rows and always 403s here —
+    // see PR notes: existence is never reached for update/delete on a missing id.
+    expect(res.status).toBe(403);
+    expect(res.body).toHaveProperty('statusCode', 403);
+  });
+
+  it('returns 403 (not 404) when deleting a project that does not exist', async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app.getHttpServer())
+      .delete('/projects/999999')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body).toHaveProperty('statusCode', 403);
+  });
 });
