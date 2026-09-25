@@ -8,11 +8,23 @@ export async function registerAndLogin(app: INestApplication): Promise<string> {
     password: 'SecurePass123!',
   };
 
-  await request(app.getHttpServer()).post('/auth/register').send(user);
+  const registerRes = await request(app.getHttpServer())
+    .post('/auth/register')
+    .send(user);
+  if (registerRes.status !== 201) {
+    throw new Error(
+      `registerAndLogin: register failed (${registerRes.status}): ${JSON.stringify(registerRes.body)}`,
+    );
+  }
 
   const loginRes = await request(app.getHttpServer())
     .post('/auth/login')
     .send({ email: user.email, password: user.password });
+  if (loginRes.status !== 200) {
+    throw new Error(
+      `registerAndLogin: login failed (${loginRes.status}): ${JSON.stringify(loginRes.body)}`,
+    );
+  }
 
   return loginRes.body.access_token as string;
 }

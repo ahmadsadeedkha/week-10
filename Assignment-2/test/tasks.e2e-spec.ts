@@ -74,4 +74,31 @@ describe('GET /tasks — combinable filters (X1)', () => {
     expect(res.body.items[0].title).toBe('Matches both filters');
     expect(res.body.total).toBe(1);
   });
+
+  it('lists comments on a task via GET /tasks/:id/comments', async () => {
+    const token = await registerAndLogin(app);
+    const projectRes = await request(app.getHttpServer())
+      .post('/projects')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Comments Project' });
+    const projectId = projectRes.body.id;
+
+    const taskRes = await request(app.getHttpServer())
+      .post('/tasks')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Commented Task', priority: 2, projectId });
+    const taskId = taskRes.body.id;
+
+    await request(app.getHttpServer())
+      .post(`/tasks/${taskId}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ body: 'First comment' });
+
+    const res = await request(app.getHttpServer()).get(
+      `/tasks/${taskId}/comments`,
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0].body).toBe('First comment');
+  });
 });

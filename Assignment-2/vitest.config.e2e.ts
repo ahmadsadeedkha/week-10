@@ -13,5 +13,14 @@ export default defineConfig({
     sequence: {
       shuffle: true, // C4: prove order-independence
     },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.service.ts'], // scoped to services, per the assignment
+      exclude: ['src/**/*.spec.ts', 'src/**/*.module.ts'],
+      thresholds: {
+        statements: 70,
+        perFile: true,
+      },
+    },
   },
 });

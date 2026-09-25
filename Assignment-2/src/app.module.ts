@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Joi from 'joi';
 import { AppController } from './app.controller.js';
@@ -28,6 +28,9 @@ import { APP_GUARD } from '@nestjs/core';
         JWT_ACCESS_EXPIRES_IN: Joi.string().default('15m'),
         JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
         CORS_ORIGIN: Joi.string().required(),
+        THROTTLE_DEFAULT_LIMIT: Joi.number().default(100),
+        THROTTLE_REGISTER_LIMIT: Joi.number().default(5),
+        THROTTLE_REFRESH_LIMIT: Joi.number().default(10),
       }),
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
@@ -35,13 +38,32 @@ import { APP_GUARD } from '@nestjs/core';
     ProjectsModule,
     UsersModule,
     CommentsModule,
-    ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        ttl: 60000, // 1 minute window
-        limit: 100, // generous — this is the general per-IP ceiling
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'default',
+          ttl: 60000,
+          limit: config.get<number>('THROTTLE_DEFAULT_LIMIT', 100),
+        },
+        {
+          name: 'register',
+          ttl: 60000,
+          limit: config.get<number>('THROTTLE_REGISTER_LIMIT', 5),
+        },
+        {
+          name: 'login',
+          ttl: 60000,
+          limit: 5, // intentionally NOT config-driven — throttle.e2e-spec.ts tests this exact real limit
+        },
+        {
+          name: 'refresh',
+          ttl: 60000,
+          limit: config.get<number>('THROTTLE_REFRESH_LIMIT', 10),
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
