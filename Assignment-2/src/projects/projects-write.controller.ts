@@ -21,6 +21,7 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { ProjectRole } from '../entities/Enums.js';
 import { ProjectSourceFrom } from '../auth/decorators/project-source.decorator.js';
 import { PositiveIntPipe } from '../common/pipes/positive-int.pipe.js';
+import { AddMemberDto } from './dto/add-member.dto.js';
 
 @UseGuards(JwtAuthGuard)
 @Controller('projects')
@@ -53,5 +54,16 @@ export class ProjectsWriteController {
   @HttpCode(204)
   remove(@Param('id', PositiveIntPipe) id: number) {
     return this.projectsService.remove(id);
+  }
+
+  @Post(':id/members')
+  @UseGuards(RolesGuard)
+  @Roles(ProjectRole.OWNER, ProjectRole.ADMIN)
+  @ProjectSourceFrom({ type: 'route-param', param: 'id' })
+  addMember(
+    @Param('id', PositiveIntPipe) id: number,
+    @Body() dto: AddMemberDto,
+  ) {
+    return this.projectsService.addMember(id, dto);
   }
 }
