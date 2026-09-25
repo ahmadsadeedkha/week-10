@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module.js';
 import { CommentsModule } from './comments/comments.module.js';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js';
 
 @Module({
   imports: [
@@ -66,6 +67,9 @@ import { APP_GUARD } from '@nestjs/core';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: AccountThrottlerGuard },
+  ],
 })
 export class AppModule {}
