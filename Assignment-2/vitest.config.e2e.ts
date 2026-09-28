@@ -15,6 +15,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'v8',
+      reportOnFailure: true,
       reporter: ['text', 'html', 'json-summary'], // html = the report you open; json-summary feeds the job summary
       include: ['src/**/*.service.ts'], // scoped to services, per the assignment
       exclude: ['src/**/*.spec.ts', 'src/**/*.module.ts'],
