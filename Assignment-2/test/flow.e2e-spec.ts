@@ -67,13 +67,20 @@ describe('End-to-end journey (W1)', () => {
     expect(commentRes.body.author_id).toBe(ownerId);
 
     // --- C1: refresh mid-flow, continue with the new token ---
+    const originalRefreshToken = refreshToken; // keep the pre-rotation token
     const refreshRes = await request(app.getHttpServer())
       .post('/auth/refresh')
       .send({ refresh_token: refreshToken });
     expect(refreshRes.status).toBe(200);
 
-    accessToken = refreshRes.body.access_token; // replace stored token
+    accessToken = refreshRes.body.access_token;
     refreshToken = refreshRes.body.refresh_token;
+
+    // The old token must be dead after rotation
+    const reuseOldRes = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refresh_token: originalRefreshToken });
+    expect(reuseOldRes.status).toBe(401);
 
     const postRefreshTaskRes = await request(app.getHttpServer()).get(
       `/tasks/${taskId}`,
