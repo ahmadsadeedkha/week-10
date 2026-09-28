@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Assignment-2
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cmit-week-10_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Assignment-2/package-lock.json
+
+      - run: npm ci
+
+      - name: Write .env.test
+        run: |
+          cat > .env.test <<'EOF'
+          NODE_ENV=test
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USERNAME=postgres
+          DB_PASSWORD=postgres
+          DB_DATABASE=cmit-week-10_test
+          JWT_SECRET=ci-only-secret-not-used-anywhere-else
+          JWT_ACCESS_EXPIRES_IN=15m
+          JWT_REFRESH_EXPIRES_IN=7d
+          CORS_ORIGIN=http://localhost:3000
+          THROTTLE_DEFAULT_LIMIT=10000
+          THROTTLE_REGISTER_LIMIT=10000
+          THROTTLE_REFRESH_LIMIT=10000
+          EOF
+
+      - name: Run e2e tests with coverage
+        run: npm run test:e2e:coverage
+
+      - name: Coverage summary
+        if: always() && hashFiles('Assignment-2/coverage/coverage-summary.json') != ''
+        run: |
+          node -e "
+          const s = require('./coverage/coverage-summary.json');
+          let out = '### Service coverage\n\n| File | Statements |\n|---|---|\n';
+          for (const [f, v] of Object.entries(s)) {
+            if (f === 'total') continue;
+            out += '| ' + f.split('/src/')[1] + ' | ' + v.statements.pct + '% |\n';
+          }
+          out += '| **total** | ' + s.total.statements.pct + '% |\n';
+          require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, out);
+          "
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: Assignment-2/coverage
+          retention-days: 14
