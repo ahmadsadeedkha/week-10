@@ -15,7 +15,7 @@ describe('Throttling (C5)', () => {
   afterEach(async () => {
     await resetDatabase(dataSource);
   });
-  
+
   afterAll(async () => {
     await app.close();
   });
@@ -33,5 +33,14 @@ describe('Throttling (C5)', () => {
 
     expect(responses.slice(0, 5)).toEqual([401, 401, 401, 401, 401]);
     expect(responses[5]).toBe(429);
+  });
+
+  it('does not apply the login limit to unrelated routes', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      const res = await request(app.getHttpServer()).get('/projects');
+      statuses.push(res.status);
+    }
+    expect(statuses.every((s) => s === 200)).toBe(true);
   });
 });

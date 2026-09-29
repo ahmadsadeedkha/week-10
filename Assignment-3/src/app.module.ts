@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { ExecutionContext, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Joi from 'joi';
@@ -9,9 +9,14 @@ import { TasksModule } from './tasks/tasks.module.js';
 import { ProjectsModule } from './projects/projects.module.js';
 import { UsersModule } from './users/users.module.js';
 import { CommentsModule } from './comments/comments.module.js';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
+import { HealthModule } from './health/health.module.js';
+
+const onlyOn = (path: string) => (ctx: ExecutionContext) =>
+  ctx.switchToHttp().getRequest().url.split('?')[0] !== path;
 
 @Module({
   imports: [
@@ -39,6 +44,7 @@ import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js'
     ProjectsModule,
     UsersModule,
     CommentsModule,
+    HealthModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -52,16 +58,19 @@ import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js'
           name: 'register',
           ttl: 60000,
           limit: config.get<number>('THROTTLE_REGISTER_LIMIT', 5),
+          skipIf: onlyOn('/auth/register'),
         },
         {
           name: 'login',
           ttl: 60000,
           limit: 5, // intentionally NOT config-driven — throttle.e2e-spec.ts tests this exact real limit
+          skipIf: onlyOn('/auth/login'),
         },
         {
           name: 'refresh',
           ttl: 60000,
           limit: config.get<number>('THROTTLE_REFRESH_LIMIT', 10),
+          skipIf: onlyOn('/auth/refresh'),
         },
       ],
     }),
@@ -70,6 +79,7 @@ import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js'
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: AccountThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
 export class AppModule {}
