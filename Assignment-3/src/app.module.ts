@@ -13,6 +13,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AccountThrottlerGuard } from './auth/guards/account-throttler.guard.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
 import { HealthModule } from './health/health.module.js';
+import { ShutdownLoggerService } from './common/shutdown-logger.service.js';
 
 const onlyOn = (path: string) => (ctx: ExecutionContext) =>
   ctx.switchToHttp().getRequest().url.split('?')[0] !== path;
@@ -54,6 +55,7 @@ const onlyOn = (path: string) => (ctx: ExecutionContext) =>
   controllers: [AppController],
   providers: [
     AppService,
+    ShutdownLoggerService,
     { provide: APP_GUARD, useClass: AccountThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
