@@ -6,7 +6,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
 import { User } from '../entities/User.js';
@@ -14,6 +13,7 @@ import { RefreshToken } from '../entities/RefreshToken.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { UserResponseDto } from './dto/user-response.dto.js';
+import { env } from '../config/env.js';
 
 export interface TokenPair {
   access_token: string;
@@ -28,7 +28,6 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -83,8 +82,7 @@ export class AuthService {
     const rawSecret = crypto.randomBytes(64).toString('hex');
     const token_hash = await argon2.hash(rawSecret);
 
-    const expiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN')!;
-    const expires_at = new Date(Date.now() + this.parseDuration(expiresIn));
+    const expires_at = new Date(Date.now() + this.parseDuration(env.jwtRefreshExpiresIn));
 
     const refreshTokenEntity = this.refreshTokenRepository.create({
       user_id: user.id,
@@ -127,10 +125,7 @@ export class AuthService {
       const rawSecret = crypto.randomBytes(64).toString('hex');
       const token_hash = await argon2.hash(rawSecret);
 
-      const expiresIn = this.configService.get<string>(
-        'JWT_REFRESH_EXPIRES_IN',
-      )!;
-      const expires_at = new Date(Date.now() + this.parseDuration(expiresIn));
+      const expires_at = new Date(Date.now() + this.parseDuration(env.jwtRefreshExpiresIn));
 
       const newTokenEntity = manager.create(RefreshToken, {
         user_id: tokenRow.user.id,

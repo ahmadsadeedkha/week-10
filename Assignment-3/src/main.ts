@@ -1,13 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
+import { env } from './config/env.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
 
   app.use(
     helmet({
@@ -30,7 +29,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN'),
+    origin: env.corsOrigin,
     credentials: true,
   });
 
@@ -39,6 +38,6 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  await app.listen(configService.get<string>('PORT') || '3000');
+  await app.listen(env.port);
 }
 await bootstrap();

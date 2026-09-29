@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from '../entities/User.js';
 import { RefreshToken } from '../entities/RefreshToken.js';
 import { AuthController } from './auth.controller.js';
@@ -11,20 +10,18 @@ import { JwtStrategy } from './jwt.strategy.js';
 import { RolesGuard } from './guards/roles.guard.js';
 import { ProjectMember } from '../entities/ProjectMember.js';
 import { Task } from '../entities/Task.js';
+import { env } from '../config/env.js';
+import type { StringValue } from 'ms';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, RefreshToken, ProjectMember, Task]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_ACCESS_EXPIRES_IN'),
-        },
-      }),
+    JwtModule.register({
+      secret: env.jwtSecret,
+      signOptions: {
+        expiresIn: env.jwtAccessExpiresIn as StringValue,
+      },
     }),
   ],
   controllers: [AuthController],

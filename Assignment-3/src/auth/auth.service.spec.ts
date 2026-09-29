@@ -9,7 +9,6 @@ describe('AuthService', () => {
   let userRepo: any;
   let refreshTokenRepo: any;
   let jwtService: any;
-  let configService: any;
   let dataSource: any;
 
   beforeEach(() => {
@@ -31,13 +30,6 @@ describe('AuthService', () => {
       signAsync: vi.fn().mockResolvedValue('fake.jwt.token'),
     };
 
-    configService = {
-      get: vi.fn((key: string) => {
-        if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
-        return undefined;
-      }),
-    };
-
     dataSource = {
       transaction: vi.fn(async (cb) => {
         const manager = {
@@ -53,7 +45,6 @@ describe('AuthService', () => {
       userRepo,
       refreshTokenRepo,
       jwtService,
-      configService,
       dataSource,
     );
   });

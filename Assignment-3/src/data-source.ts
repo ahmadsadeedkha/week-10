@@ -1,7 +1,6 @@
 import 'reflect-metadata';
 import { DataSource, DataSourceOptions } from 'typeorm';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { env } from './config/env.js';
 
 import { User } from './entities/User.js';
 import { Project } from './entities/Project.js';
@@ -10,16 +9,6 @@ import { Tag } from './entities/Tag.js';
 import { Comment } from './entities/Comment.js';
 import { ProjectMember } from './entities/ProjectMember.js';
 import { RefreshToken } from './entities/RefreshToken.js';
-
-function getEnv(name: string): string {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
-
-  return value;
-}
 
 const entities = [
   User,
@@ -33,11 +22,11 @@ const entities = [
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  host: getEnv('DB_HOST'),
-  port: Number(getEnv('DB_PORT')),
-  username: getEnv('DB_USERNAME'),
-  password: getEnv('DB_PASSWORD'),
-  database: getEnv('DB_DATABASE'),
+  host: env.dbHost,
+  port: env.dbPort,
+  username: env.dbUsername,
+  password: env.dbPassword,
+  database: env.dbDatabase,
   synchronize: false,
   logging: false,
   entities,
